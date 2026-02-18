@@ -1,0 +1,311 @@
+\section{Experiments}
+\label{sec:results}
+
+%\subsection{Quality image metrics}%
+\subsection{Metric Sensitivity Analysis}
+
+
+To better interpret full reference image quality metrics (PSNR, SSIM, LPIPS, and DISTS), a dedicated analysis is conducted to evaluate their sensitivity to physical image quality metrics (MTF and SNR). This analysis is performed on 24 simulated datasets composed of 96 patches (1500 x 1500 pixels) generated at fixed SNR and MTF degradation levels around the nominal operating point, corresponding to the \textit{Sim-Degraded-Fixed / Sim-Reference-Fixed} configuration (see \label{tab:datasets}).
+
+First, for each dataset, average MTF and SNR values are estimated and compared to their simulated reference values, confirming a strong consistency between measured and simulated sensor characteristics. Then, PSNR, SSIM, LPIPS, and DISTS are computed using the simulated reference images. Results indicate that classical and perceptual metrics exhibit markedly different sensitivities to blur and noise degradations. PSNR, LPIPS, and DISTS show a strong correlation with variations in optical blur, effectively capturing changes in image sharpness as the MTF varies. SSIM appears less sensitive to blur variations. A major limitation is observed regarding noise sensitivity. Across all evaluated metrics, variations in SNR are only weakly reflected in metric values, indicating a limited ability of standard image quality metrics to capture noise-related degradations. This observation highlights the necessity of complementing conventional image similarity metrics with physically inspired indicators when evaluating satellite image restoration performance. 
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Coefficient of determination ($R^2$) for different metrics. mMTF and mSNR denote mean estimated values.}
+\label{tab:r2_results}
+\begin{tabular}{lccc}
+\hline
+ & mMTF & mSNR@L$_0$ & mSNR@L$_1$ \\
+\hline
+$R^2$ & 0.9765 & 0.7663 & 0.8204 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{figures/graphe_metrics_selon_MTF.png}
+    \caption{SSIM, LPIPS and DISTS metrics vs. MTF level at constant SNR.}
+    \label{fig:graph1}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{figures/graphe_metrics_selon_SNR_VF.png}
+    \caption{PSNR metric vs. SNR level at constant MTF.}
+    \label{fig:graph2}
+\end{figure}
+
+\subsection{Benchmark on Simulated Restoration Task}
+A comparative evaluation of the two restoration methods introduced in Sec.~\ref{sec:Materials_restoration}, is conducted on the simulated datasets. EDSR is configured with an upscaling factor of 1 and 16 residual blocks, focusing exclusively on image restoration. The model is trained in a fully supervised manner for 30 epocs on the simulated dataset which includes multiple degradation levels : \textit{Sim-Degraded-Fixed / Sim-Reference-Fixed} (see Sec.~\ref{sec:simulated_dataset}).
+
+Both approaches are evaluated on a fixed-degradation simulated test set (\textit{Sim-Degraded-Fixed / Sim-Reference-Fixed}) using the metrics described in Sec.~\ref{sec:Metrics}. As reported in Tab.~\ref{tab:performance_simulated}, EDSR outperforms the traditional pipeline, with a +6.9 dB PSNR gain, higher SSIM, and a markedly lower LPIPS score. The restored MTF reaches 0.20 while preserving comparable SNR levels, confirming effective sharpness blur compensation without significant noise amplification. MTF estimation is not reported for the traditional pipeline since the slanted-edge method did not converge reliably due to nonlinear ringing effects introduced by the deconvolution and denoising stages.
+
+End-to-end processing time is measured to assess computational efficiency under realistic operational conditions. The traditional pipeline is inherently CPU bound and not designed for GPU acceleration, whereas EDSR naturally benefits from parallel execution on GPU architectures. Although the hardware platforms differ, each method is evaluated under a realist operational configuration, ensuring a fair comparison in terms of practical deployment feasibility. In our experiments, the traditional pipeline is executed on CPU, while EDSR is evaluated on an NVIDIA GeForce RTX 4090 GPU. Under these conditions, EDSR reduces the total end-to-end processing time, including tiling, network inference, and reconstruction, by nearly a factor of two compared to the traditional pipeline. 
+
+%End-to-end processing time is also measured to assess computational efficiency under realistic operational conditions. The traditional pipeline is executed on CPU, whereas the EDSR runtime corresponds to GPU-based processing on an NVIDIA GeForce RTX 4090. The EDSR model reduces end-to-end processing time (including tiling, inference and reconstruction) by nearly a factor of two compared to the traditional pipeline. 
+
+In addition to quantitative metrics, a qualitative visual analysis is performed, focusing on edge sharpness, texture preservation, residual noise, and the absence of non-physical artifacts. A synthetic resolution pattern embedded in simulated scenes (Fig.~\ref{fig:mire}) provides a controlled and repeatable assessment of high-frequency reconstruction. Visual observations align with the quantitative results, confirming an effective balance between smoothing and sharpness restoration, with good robustness to noise.
+
+
+\begin{table}[t]
+\centering
+\caption{Quantitative performance comparison on simulated datasets.}
+\label{tab:performance_simulated}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccccc}
+\hline
+\textbf{Method} &
+\textbf{MTF@Nyq} &
+\textbf{SNR @ $L_0$ / $L_1$} &
+\textbf{PSNR$\uparrow$} &
+\textbf{SSIM$\uparrow$} &
+\textbf{LPIPS$\downarrow$} &
+\textbf{DISTS$\downarrow$} &
+\textit{End-to-End time} \\
+\hline
+\textbf{Traditional} &
+N/A &
+\begin{tabular}{c}
+65.33 / 138.51
+\end{tabular} &
+20.6 &
+0.843 &
+0.216 &
+0.220 &
+\textit{87,3 s} \\
+\hline
+\textbf{EDSR} &
+0.20 &
+\begin{tabular}{c}
+66.27 / 156.07
+\end{tabular} &
+27.5 &
+0.932 &
+0.068 &
+0.077 &
+\textit{39.8\,s} \\
+\hline
+\end{tabular}%
+}
+\vspace{1mm}
+\footnotesize
+\textbf{MTF is averaged over 3 selected edge regions, SNR over 13 homogeneous patches (1500 × 1500 pixels), and full-reference image quality metrics over 36 patches (1500 × 1500 pixels).} End-to-End time includes tiling, network inference, and reconstruction, measured on a 197 232 640 pixels sub-swath image.
+%%($5984 \times 32960$ pixels), including tiling, inference, and reconstruction.  
+\end{table}
+
+
+\begin{figure}[htbp]
+    \centering
+    
+    \begin{subfigure}[b]{0.48\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/LQ_simu_mire.png}
+        \caption{Simulated degraded}
+        \label{fig:sub1}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/HQ_simu_mire.png}
+        \caption{Simulated reference}
+        \label{fig:sub2}
+    \end{subfigure}
+
+    \vspace{2mm}
+
+    \begin{subfigure}[b]{0.48\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/trad_simu_mire.png}
+        \caption{Traditional}
+        \label{fig:sub3}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/EDSR_simu_mire.png}
+        \caption{EDSR}
+        \label{fig:sub4}
+    \end{subfigure}
+
+    \caption{Image restoration on simulated degraded image with embedded mire.}
+    \label{fig:mire}
+\end{figure}
+
+
+
+\subsection{Robustness to Blur Degradation}
+The robustness of the EDSR model to blur degradation is further investigated under increasingly severe imaging conditions. The model is trained on \textit{Sim-Degraded-Variable / Sim-Reference-Fixed} datasets (see Tab.~\ref{tab:datasets}) and evaluated on simulated degraded images generated at fixed MTF levels. Three blur levels are considered: low, medium, and high, corresponding to $\mathrm{MTF}_{7\%}$, $\mathrm{MTF}_{5\%}$, and $\mathrm{MTF}_{3\%}$, respectively.
+For each input image, the MTF is estimated both before restoration (on degraded input) and after restoration using EDSR. Results show that the restored MTF is systematically higher than the input MTF across all degradation levels. Importantly, the gain in MTF remains relatively stable despite increasing blur severity. Even for the most degraded input ($\mathrm{MTF}_{3\%}$), EDSR provides a significant improvement in spatial resolution.
+
+These results indicate that EDSR trained on variable degradation conditions does not overfit to a single nominal operating point, but instead learns a robust restoration behavior that generalizes to unseen blur levels. This robustness is a key property for operational satellite imagery, where imaging conditions may deviate from nominal specifications due to acquisition geometry, temporal variations, or sensor aging.
+
+\begin{table}[t]
+\centering
+\caption{MTF before and after restoration with EDSR for different blur levels on simulated degraded data. \textbf{TODO ajouter les valeur HQ/LQ ref}}
+\label{tab:MTF_robustness}
+\small
+\begin{tabular}{lccc}
+\hline
+\textbf{Deg. Level} &
+\textbf{MTF(Degraded)} &
+\textbf{MTF(Restored)} &
+\textbf{$\Delta \mathrm{MTF}$} \\
+\hline
+MTF$_{7\%}$ \quad & 0.0741 & 0.2017 & +0.1276 \\
+MTF$_{5\%}$ \quad & 0.0558 & 0.1555 & +0.0997 \\
+MTF$_{3\%}$ \quad & 0.0336 & 0.1383 & +0.1047 \\
+\hline
+\end{tabular}
+\end{table}
+
+%%\subsubsection{Maxar simulated}
+    
+\subsection{Experiments on Real Pleiades Data}
+The trained model is further evaluated on real Pleiades images to assess its behavior under operational acquisition conditions. Evaluation is performed only through qualitative visual inspection and comparison with the conventional restoration pipeline. Visual inspection indicates clearer structural details, improved edge definition, and no evident non-physical artifacts or excessive ringing.
+
+Overall, these observations indicate that the learning-based restoration model generalizes well from simulated data to real Pleiades imagery, while preserving physically plausible image characteristics.
+
+
+\begin{figure}[htbp]
+    \centering
+    
+    % Image du haut
+    \begin{subfigure}{0.48\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/pleiade_L0.png}
+        \caption{Raw Pleiade}
+        \label{fig:sub1}
+    \end{subfigure}
+    
+    \vspace{3mm}
+    
+    % Deux images du bas
+    \begin{subfigure}[b]{0.48\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/pleiade_algoCNESL1.png}
+        \caption{Traditional}
+        \label{fig:sub2}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/pleiade_EDSR.png}
+        \caption{EDSR}
+        \label{fig:sub3}
+    \end{subfigure}
+    \footnotesize Pléiades © CNES 2022-2023, Distributed by CNES PWH, all rights reserved. Commercial use is prohibited.
+    
+    \caption{Comparison of raw Pleiades image and super-resolved results using the traditional algorithm and EDSR.}
+
+    
+    \label{fig:three_images}
+\end{figure}
+
+\subsection{Impact on Application Scenario: Object Detection on DIOR dataset}
+
+\begin{comment}
+    \subsubsection{Vessel detection on Very high resolution imagery}
+    Previous sections have shown that using EDSR for raw image restoration yields satisfactory results in regards to quality metrics. In addition, we tested the restoration process on task-specific metrics. Object detection in satellite imagery is heavily used on the ground, but performing it onboard would allow for better reactivity. Because of the degradation, performance can decrease. That is why being able to deploy a light restoration model is becoming effective for onboard processing.
+    In this section, we will compare two detection models derived from the same Yolo11n architecture \cite{yolo11}. One model is trained on raw images, while the other model is trained on restored images $\tilde{L1}$ from our deep neural network.
+    
+    Table \ref{tab:maxar_results} shows that the $\tilde{L1}$ dataset consistently improves detection performance compared to the Raw dataset for both models. For YOLOv11n, $\tilde{L1}$ yields slightly higher mAP50 (0.3230 vs. 0.3182), mAP90 (0.2624 vs. 0.2584), and F1-score (0.2359 vs. 0.2059). A similar trend is observed for YOLOX-S, where all metrics increase when using $\tilde{L1}$ instead of Raw, with a particularly notable improvement in F1-score (0.3754 vs. 0.2418).
+
+    Overall, these results suggest that the $\tilde{L1}$ representation provides a more informative input than Raw data, leading to consistently better detection performance across evaluation metrics.
+
+    \begin{table}[htbp]
+        \centering
+        \caption{Vessel detection comparison between raw and restored datasets}
+        \label{tab:maxar_results}
+        \small
+        \setlength{\tabcolsep}{6pt}
+        \renewcommand{\arraystretch}{1.15}
+        \begin{tabular}{llcccc}
+            \toprule
+            \textbf{Set} & \textbf{Model} & \textbf{mAP50} & \textbf{mAP90} & \textbf{F1} \\
+            \midrule
+            \multirow{2}{*}{$\tilde{L1}$}
+                & YOLOv11n & 0.3230 & 0.2624 & 0.2359 \\
+                & YOLOX-S  & 0.2895 & 0.1942 & 0.3754 \\
+            \midrule
+            \multirow{2}{*}{Raw}
+                & YOLOv11n & 0.3182 & 0.2584 & 0.2059 \\
+                & YOLOX-S  & 0.2667 & 0.1876 & 0.2418 \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+\end{comment}
+
+    %%\subsubsection{Object detection on DIOR dataset}
+    To demonstrate the versatilty of EDSR, we conducted experiments on DIOR dataset \cite{DIOR}. This well known dataset in the Earth observation community is composed of 23 463 optical remote sensing images covering 20 classes. 
+    An object detection task is performed using the YOLOv11n model \cite{yolo11}. The nano version is chosen to ensure maximum performance on edge devices. Moreover, the images are downscale to 256 x 256 pixels during training and inference to maximise inference speed.
+    
+    The original images are degraded using the simulation described in Sec.\ref{sec:datasets}. The parameters used for the simulation are described in Tab.\ref{tab:dior_degradation_parameters}. From there, degraded images are restored using our learning-based restoration as described in Sec.\ref{sec:edsr}. Thus, two datasets are available for each type of degradation: a degraded dataset and its corresponding EDSR restored version, that emulates the characteristics of the original DIOR dataset. 
+    Two degradation settings are defined: \textit{Deg-Med} (medium) and \textit{Deg-High} (high). While \textit{Deg-Med} is similar to a degradation that could be seen with a satellite sensor, we decided to push the degradation further to test the restoration capabilities of our learning-based restoration model specifically for object detection use case.
+    In addition, performance on the simulated datasets are compared with the performance on original DIOR dataset. This constitutes our baseline for our experiments.
+       
+
+    \begin{table}[t]
+        \centering
+        \caption{Summary of simulated \textbf{and real} DIOR datasets used in this work.}
+        \label{tab:dior_degradation_parameters}
+        \small
+        \begin{tabular}{lccc}
+        \hline
+        \textbf{Dataset} & \textbf{MTF} & \textbf{SNR @ $L_0$ / $L_1$} & \textbf{\#Patches} \\
+        \hline
+        Deg-Med   & 1--2\%     & 50 $\pm$ 5 / 60 $\pm$ 5 & 18\,000 / 2000 \\
+        Deg-High    & 0.1--0.5\%  & 40 $\pm$ 5 / 50 $\pm$ 5       & 18\,000 / 2000 \\
+        \hline
+        \end{tabular}
+        \vspace{1mm}
+        
+        \footnotesize
+        Number of patches is reported as \textit{Train / Test}. Patches are
+        $800 \times 800$ pixels.
+    \end{table}
+
+    Tab.\ref{tab:dior_results} displays the results for all three datasets. First, we can observe that the model achieve a strong baseline performance, with 75.90\% mAP@50 and 54.10\% mAP@90. These values shows that the training process is under control, without major flaws.
+
+    Regarding the \textit{Deg-Med} experiment, we see that the degradation impacted, even lightly so, the performance of the detection model, with a decrease of 2.6\% for both mAP@50 and mAP@90. However, the restore version \textit{Restored images} almost fully recovered the original performance.
+
+    Regarding the \textit{Deg-High} experiment, the impact of the degradation is stronger. The raw images suffer a pronounced performance drop, especially in mAP@50 (-8.60\%) and precision (-22.80\%). It indicates that detection is significantly compromised under such heavy degradation. In contrast, the restored images dramatically recover performance, bringing mAP@50 (72.37\%) and precision (85.03\%) closer to reference levels.
+
+    Overall, the results shows that even when severe degradations heavily impact the detector performance, using our proposed light restoration model improves performance significantly.
+
+
+    \begin{table}[htbp]
+        \centering
+        \caption{Object detection comparison between degraded and restored DIOR datasets with Yolo11n on 256 x 256 pixels images.}
+        \label{tab:dior_results}
+        \small
+        \setlength{\tabcolsep}{6pt}
+        \renewcommand{\arraystretch}{1.15}
+        \begin{tabular}{llcccccc}
+            \toprule
+            \textbf{Dataset} & \textbf{Set} & \textbf{mAP50} & \textbf{mAP90} & \textbf{Prec.} & \textbf{Rec.} \\
+            \midrule
+            
+            Original & N/A & 75.90\% & 54.10\% & 86.60\% & 69.30\% \\
+            
+            \midrule
+            \multirow{2}{*}{Deg-Med}
+                 & Rest. & 75.52\% & 53.88\% & 87.47\% & 68.32\% \\
+                 & Deg. & 73.33\% & 51.5\% & 85.00\% & 66.93\% \\
+            \midrule
+            \multirow{2}{*}{Deg-High}
+                 & Rest. & 72.37\% & 50.57\% & 85.03\% & 66.36\% \\
+                 & Deg. & 67.30\% & 46.29\% & 63.80\% & 60.70\% \\
+            \bottomrule
+        \end{tabular}
+    \end{table}
+
+
+    \FigDiorExample
+        
+    
+
+\subsection{Embedded Deployment}
+    - Performance speed
+\textbf{TODO  --}

@@ -1,0 +1,30 @@
+\newcommand{\FigDiorExample}{
+\begin{figure}[t]
+\centering
+\label{fig:dior_restored}
+
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{c@{\hspace{4pt}}c@{\hspace{4pt}}c}
+\toprule
+\textbf{Degraded} & \textbf{Reference} & \textbf{EDSR} \\
+\midrule
+
+\includegraphics[width=0.32\linewidth]{figures/dior_raw2/00000003.jpg}
+& \includegraphics[width=0.32\linewidth]{figures/dior_original/00000003.jpg}
+& \includegraphics[width=0.32\linewidth]{figures/dior_raw2_restored/EDSR00000003.png} \\
+
+\includegraphics[width=0.32\linewidth]{figures/dior_raw2/00000009.jpg}
+& \includegraphics[width=0.32\linewidth]{figures/dior_original/00000009.jpg}
+& \includegraphics[width=0.32\linewidth]{figures/dior_raw2_restored/EDSR00000009.png} \\
+
+\includegraphics[width=0.32\linewidth]{figures/dior_raw2/00000006.jpg}
+& \includegraphics[width=0.32\linewidth]{figures/dior_original/00000006.jpg}
+& \includegraphics[width=0.32\linewidth]{figures/dior_raw2_restored/EDSR00000006.png} \\
+
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+
+\caption{Qualitative comparison of restored RGB images with EDSR}
+\end{figure}
+}

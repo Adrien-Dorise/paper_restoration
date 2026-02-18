@@ -1,0 +1,20 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+In this paper, a series of experiments was conducted to evaluate the relevance of learning-based methods for onboard preprocessing of raw satellite imagery. A customised version of the Enhanced Deep Super-Resolution (EDSR) architecture was adapted for image restoration. An extensive dataset was constructed, comprising both real Raw / CNES-L1 pairs and simulated degraded/reference pairs.
+
+The proposed model was first evaluated using full-reference image quality metrics (SSIM, PSNR, LPIPS, and DISTS) and physical image quality metrics (SNR, MTF). Results on simulated and real Raw/CNES-L1 pairs indicate that EDSR-restored images exhibit characteristics comparable to those obtained with traditional restoration pipelines. When evaluated across varying levels of blur degradation, EDSR demonstrated strong robustness, yielding stable restored MTF values across degradation scenarios.
+
+Furthermore, EDSR was assessed as a lightweight preprocessing module for AI-based object detection. Experimental results show that detection performance consistently improves when restoration is applied prior to inference, confirming the benefit of restoration for onboard AI tasks.
+
+In future work, the EDSR architecture could be more specialised with remote sensing imagery. Indeed, because remote sensing data differ from natural images, incorporating physical priors into the restoration framework \cite{PINN_for_computer_vision} may enhance performance while preventing the emergence of non-physical geometric artefacts.
+
+Another promising direction would be to integrate restoration directly within a task-dependent AI model. Such an approach could simplify the onboard processing pipeline by eliminating the need for two independent models.
+
+Finally, because EDSR is a native super-resolution model, it could be interesting to evaluate the impact of super-resolution on onboard AI tasks
+
+%In this paper, we described a set of experiment to evaluate the relevance of learning-based methods for onboard preprocessing of remote raw satellite imagery. We adopted a \textbf{customised version }of the Enhanced Deep Super-Resolution (EDSR) architecture aimed to image restoration. We created an extensive database constituted of both real raw/processed products pairs, as well as simulated/processed products pairs. First EDSR is evaluated using quality metrics (SSIM, PSNR, LPIPS,DISTS). Results on real raw/processed pairs showed that restored images by EDSR displays similar characteristics than processed products coming from traditional restoration methods. Additionally, when tested on various blur degradation, EDSR displayed great robustness with stable restored MTF values. Furthermore, we tested EDSR as a light preprocessing steps for AI-based object detection. Our results demonstrated that task performance consistently improved when coupled with EDSR. This confirms the usefulness of restoration for onboard AI tasks. 
+
+%In a future work, we will try to improve EDSR architecture to be more specialized with remote sensing imagery. Indeed, because remote sensing images vary greatly from natural images, imbuing the restoration model with physical information \cite{PINN_for_computer_vision} could improve the performance while avoiding non-realistic geometry to emerge. 
+%Another interesting lead would be to include the restoration within a task-depentant AI model. By doing so, it would decrease the complexity of onboard pipeline, by removing entirely the need of having two independant models.
+%Finally, because EDSR is natively a super-resolution model, it could be interesting to evaluate the impact of super-resolution on onboard AI-tasks.

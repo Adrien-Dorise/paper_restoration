@@ -1,0 +1,162 @@
+\section{Material and methods}
+\label{sec:material}
+
+\subsection{Datasets}
+\label{sec:datasets}
+Learning-based image restoration requires paired data, where a simulated degraded image is mapped to a simulated reference image serving as training reference. However, in operational satellite imaging, only raw-level images are available, and no true ground-truth level-1 (L1) image exists. Consequently, supervised training cannot rely on real raw/L1 pairs without biasing the model toward reproducing a specific processing chain.
+To overcome this limitation, we construct a physics-based simulated dataset that approximates realistic satellite imaging conditions while maintaining full control over degradation parameters. This simulated dataset serves as the sole source of supervision for training.
+We consider three datasets in this study: (i) a physics-based simulated dataset used for supervised training, (ii) real Pleiades imagery for operational validation, and (iii) Maxar imagery for applicative evaluation. 
+
+\subsubsection{Spatial Resolution and GSD Degradation}
+
+Spatial blur is modeled through a parametric Modulation Transfer Function (MTF) combining optical and sensor effects:
+\begin{equation}
+\mathrm{MTF}(f_x,f_y) 
+= \exp(-\gamma f_r) 
+\cdot \mathrm{sinc}(f_x) 
+\cdot \mathrm{sinc}(f_y),
+\end{equation}
+where
+\[
+f_r = \sqrt{f_x^2 + f_y^2}
+\]
+and $\gamma$ is calibrated from a Nyquist value $MTF_{Nyq}$.  
+The corresponding Point Spread Function (PSF) is obtained as
+\begin{equation}
+\mathrm{PSF} = \mathcal{F}^{-1}\{\mathrm{MTF}\},
+\end{equation}
+and each spectral band is convolved with the PSF.
+
+To simulate a coarser Ground Sampling Distance, the blurred image is then downsampled by a factor $r$ (oversampling ratio). Prior to subsampling, an anti-aliasing Gaussian filter is applied. The image is then sampled every $r$ pixels:
+\begin{equation}
+I_{\text{GSD}}(x,y) = I_{\text{blur}}(x_0 + r x,\; y_0 + r y),
+\end{equation}
+where $(x_0,y_0)$ denotes a centered offset ensuring no spatial shift. This procedure simulates both resolution loss and pixel footprint enlargement.
+
+\subsubsection{Signal-Dependent Noise Model}
+\label{sec:signal_dependent_noise}
+
+Radiometric degradation is modeled using signal-dependent Gaussian noise:
+\begin{equation}
+\sigma^2(L) = \alpha L + \beta,
+\end{equation}
+where $L$ is the luminance. The parameters $\alpha$ and $\beta$ are estimated from two reference luminance--SNR pairs $(L_0,\mathrm{SNR}_0)$ and $(L_1,\mathrm{SNR}_1)$:
+\begin{equation}
+\sigma_i^2 = \left(\frac{L_i}{\mathrm{SNR}_i}\right)^2,
+\qquad
+\sigma_i^2 = \alpha L_i + \beta.
+\end{equation}
+Noise is sampled as
+\begin{equation}
+\sigma(L) = \sqrt{\max(0, \alpha L + \beta)},
+\end{equation}
+and added independently to each pixel.
+
+By varying $MTF_{Nyq}$, the downsampling factor $r$, and the reference SNR values, multiple degradation levels are generated, enabling systematic evaluation under controlled and realistic imaging conditions.
+
+\subsubsection{Simulated Dataset}
+\label{sec:simulated_dataset}
+
+The simulated dataset constitutes the core of our training framework. 
+The ability of a learning-based restoration model to effectively learn and generalize strongly depends on the richness, diversity, and reliability of the training data. To this end, we design a simulated dataset that aims to be representative of the wide range of landscapes and imaging conditions encountered in operational satellite imagery.
+
+The simulated dataset is constructed from high-resolution aerial RGB imagery obtained from OpenAerialMap \cite{openaerialmap}, with an initial GSD of 10 cm. This resolution provides sufficient spatial margin to realistically simulate satellite acquisition conditions by degrading the data toward the targeted GSD, MTF, and SNR operating ranges. The dataset composition covers a wide variety of landscape types (urban, suburban, rural, agricultural, forested, coastal, and mountainous areas), with an emphasis on urban environments characterized by high spatial frequencies, sharp edges, and dense structural details. Such scenes are particularly challenging for image restoration and constitute a robust evaluation of the model’s ability to recover fine details without introducing artifacts such as ringing or oversmoothing.
+
+To emulate realistic satellite acquisition conditions, aerial RGB images are converted to panchromatic imagery and degraded through a physics-based sensor simulation pipeline modeling the key characteristics of the target system (GSD, MTF and SNR). This process generates paired simulated degraded and simulated reference images under controlled and reproducible degradation settings.
+
+The resulting images are produced at a target GSD of 50\,cm and stored as 12-bit panchromatic TIFF patches. Several dataset configurations are generated (see Tab.~\ref{tab:datasets}). Fixed-degradation datasets correspond to the nominal operating point representative of chosen typical acquisition conditions, denotate as \textit{Sim-Degraded-Fixed / Sim-Reference-Fixed} configuration in Tab.~\ref{tab:datasets}. In addition, variable-degradation datasets are created by sampling MTF and SNR values within realistic ranges around this nominal configuration, enabling the model to learn robustness to variations in imaging conditions.
+
+The training set consists of $128 \times 128$ pixel patches (196 128 samples), while testing is performed on $1500 \times 1500$ pixel images (36 scenes) in order to evaluate both restoration fidelity and the impact of patch-based tiling during inference.
+
+Experimental analysis indicates that training with multiple degradation levels (variable configuration) yields superior robustness compared to training at a single nominal operating point. Exposure to diverse MTF and SNR conditions improves generalization to unseen acquisition settings. Although fine-tuning on real data can further enhance performance when such data are available, all results reported in this work rely exclusively on models trained on simulated data to assess intrinsic sim-to-real generalization capability.
+
+\begin{table}[t]
+\centering
+\caption{Summary of simulated and real datasets used in this work.}
+\label{tab:datasets}
+\scriptsize
+\begin{tabular}{lccc}
+\hline
+\textbf{Dataset} & \textbf{MTF} & \textbf{SNR @ $L_0$ / $L_1$} & \textbf{\# Patches} \\
+\hline
+Sim-Degraded-Variable   & 3--7\%     & 50 $\pm$ 40 / 110 $\pm$ 40 & 196\,128 / 36 \\
+Sim-Degraded-Fixed      & 7\%        & 50 / 110                        & 196\,128 / 36 \\
+Sim-Reference-Fixed      & 25\%       & 80 / 170                        & 196\,128 / 36 \\
+Real-Raw-Pleiades  & $\sim$7\%  & $\sim$50 / $\sim$110            & -- / 19 \\
+\hline
+\end{tabular}
+\vspace{1mm}
+
+\footnotesize
+SNR values (in dB) are defined at reference luminance levels $L_0 = 25$ and $L_1 = 100$~W/m$^2$/sr/$\mu$m. Number of patches is reported as \textit{Train / Test}. Training patches are
+$128 \times 128$ pixels, while test patches are $1500 \times 1500$ pixels.
+\end{table}
+
+
+
+\subsubsection{Real Imagery: Pleiades-HR}
+For real-world validation, we use optical panchromatic imagery acquired by the Pleiades satellite constellation operated by the French Space Agency (Centre National d’Études Spatiales, CNES). Raw-level images are used as input to the restoration algorithms to ensure a fair and unbiased comparison between learning-based and traditional approaches. Their main characteristics are reported in Tab.~\ref{tab:datasets}.
+Pleiades L1 products processed by the CNES ground segment are available and are used as a reference baseline for comparison. However, these L1 images are deliberately not employed as supervision targets during training. Using raw/L1 image pairs for supervised learning would bias the model toward reproducing the output of the traditional processing chain rather than learning an independent restoration mapping.
+Our objective is not to mimic the legacy ground-processing pipeline, but to assess whether a learning-based approach can directly infer restoration parameters that achieve or surpass the desired image quality. By avoiding supervision on L1 products, we prevent the model from inheriting design assumptions, artifacts, or limitations specific to the traditional method, and instead encourage it to learn optimal restoration behavior driven by physically realistic data.
+As no ground-truth reference exists for real satellite imagery, evaluation on Pleiades data relies on a combination of physical image quality indicators, visual inspection, and direct comparison with the traditional CNES processing chain.
+
+\subsection{Deep Learning Restoration}
+\label{sec:Materials_restoration}
+
+\subsubsection{Traditional Restoration Pipeline}
+As a reference baseline, we consider the classical image restoration pipeline deployed by CNES for Pleiades-HR ground processing \cite{pleiades_restoration,fusion_pleiades}. This approach follows a sequential processing scheme, combining optical deconvolution to compensate sensor blur with NL-bayes denoising to reduce noise while preserving structural details \cite{NL_bayes_for_restoration}.
+The method relies on explicit physical modeling of the imaging system and requires accurate knowledge of sensor characteristics and acquisition parameters. While robust and well validated in operational contexts, the pipeline involves multiple processing stages, intermediate buffers, and iterative operations, resulting in high computational complexity and limited flexibility when faced with variations in imaging conditions. These characteristics make the approach difficult to adapt to onboard or real-time deployment.
+
+\subsubsection{Learning-Based Restoration Model: EDSR}
+\label{sec:edsr}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{figures/edsr.png}
+    \caption{EDSR architecture \cite{EDSR}}
+    \label{fig:edsr}
+\end{figure}
+
+We adopt the Enhanced Deep Super-Resolution (EDSR) network \cite{EDSR} as a light and non-generative learning-based restoration model. EDSR is a fully convolutional residual architecture composed of a sequence of residual blocks without batch normalization and followed by a reconstruction module, as shown in Fig.\ref{fig:edsr}. In the proposed configuration, the architecture is adapted to use a scale factor of 1, enabling exclusively image restoration without spatial resolution enhancement.
+The absence of adversarial training and generative components ensures stable optimization and avoids hallucination of artificial structures, which is critical for operational satellite imagery. The residual design facilitates learning of high-frequency corrections, and the absence of batch normalization helps preserve feature magnitude and overall image consistency. Training is performed in a fully supervised manner using simulated image pairs (\textit{Sim-Degraded-Variable / Sim-Reference-Fixed}) only, to assess the intrinsic generalization capability of the model.
+
+\textbf{TODO: ajouter ici un petit paragraphe pour l'aspect portabilité?}
+
+\subsection{Embedded Materials?}
+
+\textbf{**************** TODO *********************}
+
+\subsection{Metrics}
+\label{sec:Metrics}
+
+Restoration performance is evaluated through two complementary perspectives: reference-based image similarity metrics and physically grounded sensor-level performance indicators, together with qualitative visual inspection.
+
+
+\subsubsection{Full-Reference Image Quality Metrics}
+
+On simulated datasets, where simulated reference images are available, restoration performance is evaluated using classical full-reference image quality metrics, including Peak Signal-to-Noise Ratio (PSNR) and Structural Similarity Index (SSIM). These metrics quantify pixel-level fidelity and structural consistency between restored images and their reference counterparts. 
+Although widely adopted, these metrics may exhibit limited correlation with perceived visual quality, particularly in the presence of blur–noise trade-offs. To better capture perceptual and structural aspects of restoration, we additionally report learned perceptual metrics: LPIPS (Learned Perceptual Image Patch Similarity) and DISTS (Deep Image Structure and Texture Similarity). These feature-based metrics rely on deep neural representations and have demonstrated improved sensitivity to texture reconstruction, edge preservation, and structural distortions, properties that are critical in high-resolution satellite imagery.
+
+For real satellite data, where no reference image is available, full-reference metrics (PSNR, SSIM, LPIPS, and DISTS) cannot be computed.
+
+\subsubsection{Physical Image Quality Metrics}
+
+Beyond similarity-based measures, we estimate physical image quality metrics directly related to imaging system performance. In particular, MTF and the SNR are measured on restored images and compared with their input counterparts.
+
+The MTF is estimated using a slanted-edge method implemented in the \textit{MTF Estimator} plugin for QGIS \cite{Gil_MTFEstimator_QGIS_2025}, computed across several multiple selected edge regions to obtain representative measurement. The SNR is evaluated over multiple homogeneous regions using the variance-based radiometric approach described in \cite{Liu1999SNR}, following the signal-dependent noise model introduced in Sec.~\ref{sec:signal_dependent_noise}.
+
+These indicators provide a physically interpretable assessment of blur compensation and noise amplification, ensuring consistency with operational imaging specifications. \textbf{For real satellite imagery, evaluation relies primarily on these sensor level indicators, complemented by qualitative visual inspection and comparison with the conventional processing chain.}
+
+\begin{comment}
+\subsubsection{Synthetic Pattern Analysis}
+
+To further objectify the evaluation of fine-detail restoration, a synthetic resolution pattern is embedded into selected simulated scenes (Fig.~\ref{fig:sub1}). This controlled setup enables repeatable assessment of edge sharpness and contrast transfer under known degradation conditions. The resolution target provides an interpretable visual and quantitative reference for evaluating high-frequency reconstruction capabilities beyond global similarity scores.
+\end{comment}
+
+%%\subsubsection{Use case metrics}
+%%In addition to generic image quality assessment, restoration performance is evaluated %%in applicative scenarios representative of operational use cases. 
+%%\textbf{*****on conserve?  => ou tout dans les résultats. ******}
+
+\subsubsection{Onboard benchmark}
+
+\textbf{*********TODO****************}

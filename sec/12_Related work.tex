@@ -1,0 +1,38 @@
+\section{RelatedWork}
+\label{sec:RelatedWork}
+
+\begin{comment}
+\subsection{Traditional restoration}
+Remote sensing products are divided into \textit{Levels} that dictates the amount of processing performed on the product. The first available product is usually a Level-1, which is usually correlated to image quality improvement (radiometric and geometric corrections, coregistration, orthorectification...) from the raw image dowloaded from the satellite. If we focus into radiometric corrections, deconvolution and denoising is prevalent. Pleiades sytems uses deconvolution with NL bayes \cite{pleiades_restoration}
+
+\subsection{AI-based restoration}
+In parallel, new AI-based methods are emrging for the restoration of raw products \cite{deep_priors_for_restoration, VAE_for_restauration}. These methods show promising results.
+Moreover, many works focuses on remote-sensing super-resolution, in order to go beyond the system maximum resolution [\textbf{TODOFIND paper}].
+
+\subsection{Onboard restoration}
+However, onboard application still mimics on-ground processing, and heavy traditional processing technics are implmented in the embeded pipeline \cite{opssat_meoni}. At our knowledge, no space misions have implemented learning-based restoration in their pipeline [\textbf{TODO}: verify ] 
+
+\subsection{Positioning of this work}
+Our work evaluates whether a light, non-generative residual CNN trained only on physics-based simulated data can match or outperform a traditional restoration chain across operating conditions while meeting onboard efficiency requirements. We further quantify impacts on physical metrics (MTF/SNR), on downstream detection, as well as hardware perforamnce.
+\end{comment}
+
+
+\subsection{Traditional Restoration}
+Remote sensing products are typically distributed according to standardized \textit{processing levels}, which reflect the degree of radiometric and geometric correction applied to the raw sensor measurements. The first publicly available product is generally a Level-1 image, obtained after radiometric calibration, geometric correction, co-registration, and orthorectification of the raw acquisition.
+
+Focusing on radiometric enhancement, classical restoration pipelines usually combine deconvolution and denoising stages. In very-high-resolution optical systems such as Pléiades, restoration relies on an instrument-driven deconvolution step followed by advanced denoising methods such as NL-Bayes \cite{pleiades_restoration}. These approaches leverage accurate knowledge of the system point spread function (PSF) and noise statistics to improve image sharpness while controlling noise amplification. Although effective and physically grounded, such multi-stage pipelines are computationally demanding and typically designed for ground-based processing.
+
+\subsection{AI-Based Restoration}
+In parallel, learning-based approaches have emerged for raw image restoration \cite{deep_priors_for_restoration, VAE_for_restauration}. These methods aim to jointly learn blur compensation and noise suppression in an end-to-end framework, often outperforming traditional pipelines in reconstruction quality. 
+
+More broadly, deep learning has become dominant in remote sensing image enhancement, particularly for single-image super-resolution, where models attempt to surpass the native spatial resolution of the sensor. Numerous CNN- and transformer-based architectures have demonstrated strong quantitative performance in this setting [citation needed]. However, many of these approaches rely on large models or generative components, which may introduce hallucinated structures and raise concerns regarding geometric and radiometric fidelity in operational Earth observation contexts.
+
+\subsection{Onboard Restoration}
+Despite the rapid progress of AI-based restoration methods, onboard image processing pipelines largely replicate traditional ground-based approaches. Existing spaceborne AI demonstrations have primarily focused on downstream tasks such as scene classification or object detection, while radiometric restoration continues to rely on conventional techniques embedded in the acquisition chain \cite{opssat_meoni}. 
+
+To the best of our knowledge, learning-based restoration has not yet been operationally deployed as part of the primary onboard image processing pipeline of an Earth observation mission. This gap is mainly due to strict constraints on computational resources, power consumption, and reliability requirements in space environments.
+
+\subsection{Positioning of This Work}
+In this work, we investigate whether a lightweight, non-generative residual CNN trained exclusively on physics-based simulated data can match or surpass a traditional restoration chain across varying operating conditions while remaining compatible with onboard computational constraints. 
+
+Beyond standard image-quality metrics, we evaluate performance using physically meaningful indicators (MTF and SNR), assess impact on downstream object detection, and analyze hardware-level efficiency. This multi-faceted evaluation enables a comprehensive comparison between classical and learning-based restoration in an onboard-oriented setting.

@@ -1,0 +1,23 @@
+\section{Introduction}
+\label{sec:intro}
+
+High-resolution optical satellite imagery is acquired onboard at Raw level, where sensor optical limitations and acquisition conditions, including modulation transfer function effects and noise, inherently degrade image quality. Image restoration aims to compensate for these degradations by jointly addressing optical blur, sensor noise, and acquisition-related effects.
+%To mitigate these degradations, image restoration aims to compensate for sensor-induced noise and optical blur as well as acquisition-related effects. 
+It therefore constitutes a prerequisite pre-processing step for any higher-level  exploitation of satellite imagery.%, both in ground-based and onboard processing pipelines.
+This is true not only for traditional ground-based workflows but also for emerging onboard processing pipelines, where early enhancement of image quality can directly benefit downstream analytical tasks.
+
+
+Traditional restoration approaches are typically based on sequential physical models, combining deconvolution and denoising stages \cite{pleiades_restoration, carlavan_restoration, NL_bayes_for_restoration}. While robust and well established, such pipelines, historically deployed on ground infrastructures, are computationally demanding, often involving iterative optimization procedures and multiple intermediate buffers. This results in significant memory usage and processing latency, which severely limit their suitability for onboard implementation. Furthermore, their effectiveness relies on precise knowledge of acquisition parameters and imaging system characteristics. Yet, in-flight operational conditions induce dynamic variations in the physical image formation process (e.g., thermomechanical effects, micro-vibrations, pointing instability), leading to deviations from nominal models that are difficult to anticipate and faithfully capture. Such variability challenges the robustness of purely model-based restoration methods.
+
+The increasing demand for low-latency applications, including disaster response \textbf{[ Mini biblio TODO]}, maritime surveillance\textbf{[ Mini biblio TODO]}, and autonomous onboard decision-making, motivates a shift toward more efficient processing strategies. In this context, recent learning-based approaches enable joint optimization of blur compensation and noise reduction within a single model \cite{deep_priors_for_restoration,thesis_restoration_AI,pseudo_generative_for_restoration, AI_for_pleiades} offering a promising alternative for ground and board.
+
+In this work, we investigate whether a light non-generative residual convolutional neural network, EDSR \cite{EDSR}, trained exclusively on physically realistic simulated satellite data, can achieve restoration performance comparable to a traditional ground-processing pipeline when applied to both simulated and real Pleiades imagery.
+
+Beyond image quality assessment, we evaluate the impact of such restoration on AI based remote sensing applications, specifically object detection. Then, we analyze the computational efficiency and architectural properties of EDSR in the context of onboard deployment, demonstrating its suitability under memory, latency, and power constraints typical of spaceborne systems.
+
+The remainder of this paper is organized as follows. Section 2 reviews related work in satellite image restoration and learning-based approaches. Section 3 describes the proposed methodology, including the physics-based simulation framework, the datasets, and the EDSR based restoration model. Section 4 presents experimental results on simulated and real Pleiades imagery, as well as the evaluation on object detection tasks and embedded performance analysis. Section 5 discusses the operational implications of the proposed approach, and Section 6 concludes the paper with perspectives for future research.
+
+
+%Related work:
+%- pourquoi IA c'est mieux
+%- avec SciSpace / + chat GPT
